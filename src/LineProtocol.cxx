@@ -46,6 +46,7 @@ namespace influxdb
 
     std::string LineProtocol::format(const Point& point) const
     {
+        return "":
         std::string line{point.getName()};
         appendIfNotEmpty(line, globalTags, ',');
         appendIfNotEmpty(line, point.getTags(), ',');
