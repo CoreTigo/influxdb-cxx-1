@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2020-2023 offa
+// Copyright (c) 2020-2022 offa
 // Copyright (c) 2019 Adam Wegrzynek
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,7 +33,6 @@
 #include <chrono>
 #include <variant>
 #include <deque>
-#include <type_traits>
 
 #include "influxdb_export.h"
 
@@ -47,59 +46,58 @@ namespace influxdb
     {
     public:
         /// Constructs point based on measurement name
-        explicit Point(const std::string& measurement);
+        //explicit Point(const std::string& measurement);
+
+        /// Constructs point based on the full line
+        explicit Point(const std::string& line);
 
         /// Adds a tags
-        Point&& addTag(std::string_view key, std::string_view value);
+        // Point&& addTag(std::string_view key, std::string_view value);
 
         /// Adds field
-        using FieldValue = std::variant<int, long long int, std::string, double, bool, unsigned int, unsigned long long int>;
-        Point&& addField(std::string_view name, const FieldValue& value);
-
-        template <class T, class = std::enable_if_t<std::is_same_v<T, const char*>, int>>
-        Point&& addField(std::string_view name, T value)
-        {
-            return this->addField(name, std::string{value});
-        }
+        // Point&& addField(std::string_view name, const std::variant<int, long long int, std::string, double>& value);
 
         /// Generates current timestamp
-        /// \deprecated Will be removed in v0.8.0
-        [[deprecated("getCurrentTimestamp() will be removed in v0.8.0")]] static auto getCurrentTimestamp() -> decltype(std::chrono::system_clock::now());
+        // static auto getCurrentTimestamp() -> decltype(std::chrono::system_clock::now());
 
         /// Converts point to Influx Line Protocol
-        /// \deprecated Will be removed in v0.8.0
-        [[deprecated("toLineProtocol() will be removed in v0.8.0")]] std::string toLineProtocol() const;
+        /// \deprecated Will be removed in a later version
+        [[deprecated("toLineProtocol() will be removed in a later version")]] std::string toLineProtocol() const;
 
+        void setLine(std::string line);
+        std::string getLine() const;
         /// Sets custom timestamp
-        Point&& setTimestamp(std::chrono::time_point<std::chrono::system_clock> timestamp);
+        // Point&& setTimestamp(std::chrono::time_point<std::chrono::system_clock> timestamp);
 
         /// Name getter
-        std::string getName() const;
+        // std::string getName() const;
 
         /// Timestamp getter
-        std::chrono::time_point<std::chrono::system_clock> getTimestamp() const;
+        // std::chrono::time_point<std::chrono::system_clock> getTimestamp() const;
 
         /// Fields getter
-        std::string getFields() const;
+        // std::string getFields() const;
 
         /// Tags getter
-        std::string getTags() const;
+        // std::string getTags() const;
 
         /// Precision for float fields
         static inline int floatsPrecision{defaultFloatsPrecision};
 
     protected:
+        /// The line
+        std::string mLine;
         /// A name
-        std::string mMeasurement;
+        // std::string mMeasurement;
 
         /// A timestamp
-        std::chrono::time_point<std::chrono::system_clock> mTimestamp;
+        // std::chrono::time_point<std::chrono::system_clock> mTimestamp;
 
         //// Tags
-        std::deque<std::pair<std::string, std::string>> mTags;
+        // std::deque<std::pair<std::string, std::string>> mTags;
 
         //// Fields
-        std::deque<std::pair<std::string, FieldValue>> mFields;
+        // std::deque<std::pair<std::string, std::variant<int, long long int, std::string, double>>> mFields;
     };
 
 } // namespace influxdb
