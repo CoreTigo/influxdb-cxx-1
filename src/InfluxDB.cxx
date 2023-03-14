@@ -1,6 +1,6 @@
 // MIT License
 //
-// Copyright (c) 2020-2023 offa
+// Copyright (c) 2020-2022 offa
 // Copyright (c) 2019 Adam Wegrzynek
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -45,7 +45,7 @@ namespace influxdb
     {
         if (mTransport == nullptr)
         {
-            throw InfluxDBException{"Transport must not be nullptr"};
+            throw InfluxDBException{"[InfluxDB]", "Transport must not be nullptr"};
         }
     }
 
@@ -67,7 +67,9 @@ namespace influxdb
 
     void InfluxDB::flushBatch()
     {
-        if (mIsBatchingActivated && !mPointBatch.empty())
+//        if (mIsBatchingActivated && !mPointBatch.empty())
+    std::cout << "flushing**********" << std::endl;
+        if (!mPointBatch.empty())
         {
             transmit(joinLineProtocolBatch());
             mPointBatch.clear();
@@ -78,13 +80,14 @@ namespace influxdb
     {
         std::string joinedBatch;
 
-        LineProtocol formatter{mGlobalTags};
+        // LineProtocol formatter{mGlobalTags};
         for (const auto& point : mPointBatch)
         {
-            joinedBatch += formatter.format(point) + "\n";
+            joinedBatch += point.getLine() + "\n";
         }
 
         joinedBatch.erase(std::prev(joinedBatch.end()));
+        //std::cout << "lines: " << joinedBatch << std::endl;
         return joinedBatch;
     }
 
@@ -107,15 +110,24 @@ namespace influxdb
 
     void InfluxDB::write(Point&& point)
     {
-        if (mIsBatchingActivated)
+        std::cout << "inside write***" << std::endl;
+
+        mPointBatch.emplace_back(std::move(point));
+
+        if (mPointBatch.size() >= mBatchSize)
         {
-            addPointToBatch(std::move(point));
+        std::cout << "calling flush inside write***" << std::endl;
+            flushBatch();
         }
-        else
-        {
-            LineProtocol formatter{mGlobalTags};
-            transmit(formatter.format(point));
-        }
+        //if (mIsBatchingActivated)
+        //{
+         //   addPointToBatch(std::move(point));
+        //}
+        //else
+        //{
+        //    LineProtocol formatter{mGlobalTags};
+        //    transmit(formatter.format(point));
+       // }
     }
 
     void InfluxDB::write(std::vector<Point>&& points)
@@ -130,11 +142,11 @@ namespace influxdb
         else
         {
             std::string lineProtocol;
-            LineProtocol formatter{mGlobalTags};
+            // LineProtocol formatter{mGlobalTags};
 
             for (const auto& point : points)
             {
-                lineProtocol += formatter.format(point) + "\n";
+                lineProtocol += point.getLine() + "\n";
             }
 
             lineProtocol.erase(std::prev(lineProtocol.end()));
@@ -164,7 +176,14 @@ namespace influxdb
 
     void InfluxDB::createDatabaseIfNotExists()
     {
-        mTransport->createDatabase();
+        try
+        {
+            mTransport->createDatabase();
+        }
+        catch (const std::runtime_error&)
+        {
+            throw InfluxDBException(__func__, "Transport did not allow create database");
+        }
     }
 
 } // namespace influxdb
