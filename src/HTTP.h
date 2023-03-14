@@ -58,6 +58,10 @@ namespace influxdb::transports
         /// Creates database used at url if it does not exists
         /// \throw InfluxDBException	when HTTP POST fails
         void createDatabase() override;
+        
+        /// Enable Basic Auth
+        /// \param auth <API Token>
+        void enableTokenAuth(const std::string &auth);
 
         /// Enable Basic Authentication
         /// \param user username
